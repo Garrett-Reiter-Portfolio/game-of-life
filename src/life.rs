@@ -1,11 +1,11 @@
 //! Conway's Game of Life implemented on a 5×5 "frame
 //! buffer" of `u8` pixels that can be either 0 or 1.
 
-/// Return `true` iff the frame buffer contains no 1
-/// pixels.
-pub fn done(fb: &[[u8; 5]; 5]) -> bool {
-    fb == &[[0u8; 5]; 5]
-}
+// Return `true` iff the frame buffer contains no 1
+// pixels.
+//pub fn done(fb: &[[u8; 5]; 5]) -> bool {
+//    fb == &[[0u8; 5]; 5]
+//}
 
 /// Make a step according to the Game of Life rules.
 pub fn life(fb: &mut [[u8; 5]; 5]) {
