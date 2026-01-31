@@ -5,12 +5,9 @@
 mod life;
 use life::*;
 
-//use embedded_hal::delay::DelayNs;
-//use embedded_hal::digital::{InputPin, OutputPin};
 use embedded_hal::digital::InputPin;
 use cortex_m_rt::entry;
 use microbit::{
-    //board::{Board, Buttons},
     board::Board,
     display::blocking::Display, 
     hal::{
@@ -20,7 +17,6 @@ use microbit::{
 };
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
-//use nanorand::{pcg64::Pcg64, Rng, SeedableRng};
 use nanorand::{pcg64::Pcg64, Rng};
 
 const FRAME: u32 = 100;
@@ -55,6 +51,8 @@ fn invert_board(board: &mut [[u8; 5]; 5]) {
     }
 }
 
+//Status gives us the ability to make things persist through the loops
+//by using counters
 #[derive(Clone, Copy)] //automatically implement traits Clone and Copy
 enum Status {
     Normal,
@@ -86,6 +84,9 @@ fn main() -> ! {
     let mut timer = Timer::new(board.TIMER0);
     let mut display = Display::new(board.display_pins);
     let mut hardware_rng: HwRng = HwRng::new(board.RNG);
+    //this gets two random u64 ints in the bottom half of the u128 bits
+    //shuffles one to the top half and bitwise ORs them together for a single
+    //random u128 bit to set the seed on nrg
     let hi = hardware_rng.random_u64() as u128;
     let lo = hardware_rng.random_u64() as u128;
     let seed: u128 = (hi << 64) | lo;
@@ -94,9 +95,7 @@ fn main() -> ! {
     let mut button_a = board.buttons.button_a;
     let mut button_b = board.buttons.button_b;
 
-    //get random bool
-    //let b: bool = rng.generate();
-
+    //I like the glider for the starting place instead of random
     let mut leds = [
         [0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0],
@@ -105,8 +104,10 @@ fn main() -> ! {
         [0, 0, 0, 0, 0],
     ];
 
-    //randomize_board(& mut rng, & mut leds);
+    randomize_board(& mut rng, & mut leds);
 
+    //state blockes the b button, 
+    //board_state allows 5 frames of unlit LED matrix
     let mut state = Status::Normal;
     let mut board_state = Status::Normal;
 
@@ -138,11 +139,13 @@ fn main() -> ! {
             rprintln!("Empty");
             match board_state {
                 Status::Normal => { 
+                    rprintln!("Starting count at 5");
                     board_state = board_state.flip(); 
                 }
                 Status::Wait(ticks) => {
                     rprintln!("num ticks: {}", ticks);
                     if ticks == 0 {
+                        rprintln!("applying new pattern");
                         board_state = board_state.flip();
                         randomize_board(& mut rng, & mut leds);
                     }
@@ -153,7 +156,6 @@ fn main() -> ! {
 
         display.show(&mut timer, leds, FRAME);
         life(&mut leds);
-        //timer.delay_ms(FRAME);
     }
 
 }
