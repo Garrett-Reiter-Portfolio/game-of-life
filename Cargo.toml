@@ -1,0 +1,22 @@
+[package]
+name = "game-of-life"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+cortex-m-rt = "0.7"
+embedded-hal = "1.0.0"
+heapless = "0.9.2"
+microbit-v2 = "0.16"
+nanorand = { version = "0.8.0", default-features = false, features = ["pcg64", "entropy"] }
+#nanorand = "0.8.0"
+panic-rtt-target = "0.2"
+rtt-target = "0.6"
+
+[dependencies.cortex-m]
+version = "0.7"
+features = ["inline-asm", "critical-section-single-core"]
+
+
+
