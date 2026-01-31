@@ -12,8 +12,9 @@ LEDS from on to off and vice versa.
 The A button randomized which LEDs are turned on.
 
 How it went:
-So far I'm struggling to find relevent information in the Rust docs, for example
+
+So far, I'm struggling to find relevant information in the Rust docs, for example,
 https://docs.rs/microbit-v2/latest/microbit/board/struct.Buttons.html
-In the board Button docs I don't see where `.is_low()` is documented here, I just used it 
+In the board Button docs, I don't see `.is_low()` documented. I just used it 
 because that's what's in our book.
 
