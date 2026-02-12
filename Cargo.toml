@@ -18,5 +18,5 @@ rtt-target = "0.6"
 version = "0.7"
 features = ["inline-asm", "critical-section-single-core"]
 
-
-
+[features]
+start-glider = []

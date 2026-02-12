@@ -5,19 +5,16 @@
 mod life;
 use life::*;
 
-use embedded_hal::digital::InputPin;
 use cortex_m_rt::entry;
+use embedded_hal::digital::InputPin;
 use microbit::{
     board::Board,
-    display::blocking::Display, 
-    hal::{
-        Rng as HwRng,
-        timer::Timer,
-    },
+    display::blocking::Display,
+    hal::{Rng as HwRng, timer::Timer},
 };
+use nanorand::{Rng, pcg64::Pcg64};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
-use nanorand::{pcg64::Pcg64, Rng};
 
 const FRAME: u32 = 100;
 const WAIT_TIME: u16 = 4;
@@ -46,7 +43,7 @@ fn randomize_board(rng: &mut Pcg64, board: &mut [[u8; 5]; 5]) {
 fn invert_board(board: &mut [[u8; 5]; 5]) {
     for row in 0..5 {
         for col in 0..5 {
-            board[row][col] = if board[row][col] == 1 {0} else {1};
+            board[row][col] = if board[row][col] == 1 { 0 } else { 1 };
         }
     }
 }
@@ -74,8 +71,6 @@ impl Status {
         }
     }
 }
-            
-
 
 #[entry]
 fn main() -> ! {
@@ -96,17 +91,19 @@ fn main() -> ! {
     let mut button_b = board.buttons.button_b;
 
     //I like the glider for the starting place instead of random
-    let mut leds = [
-        [0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0],
-        [0, 0, 0, 1, 0],
-        [0, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0],
-    ];
+    let mut leds = if cfg!(feature = "start-glider") {
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0],
+        ]
+    } else {
+        [[0; 5]; 5]
+    };
 
-    randomize_board(& mut rng, & mut leds);
-
-    //state blockes the b button, 
+    //state blockes the b button,
     //board_state allows 5 frames of unlit LED matrix
     let mut state = Status::Normal;
     let mut board_state = Status::Normal;
@@ -115,41 +112,45 @@ fn main() -> ! {
         //handles button A presses
         if button_a.is_low().unwrap() {
             rprintln!("A button acknowledged");
-            randomize_board(& mut rng, & mut leds);
+            randomize_board(&mut rng, &mut leds);
         }
 
         //handles button b presses
         let button_pressed = button_b.is_low().unwrap();
         match (button_pressed, state) {
-            (true, Status::Normal) => { 
+            (true, Status::Normal) => {
                 rprintln!("B button acknowledged");
                 invert_board(&mut leds);
                 state = state.flip();
             }
-            (_ , Status::Wait(ticks)) => {
+            (_, Status::Wait(ticks)) => {
                 rprintln!("B button blocked");
-                if ticks == 0 { state = state.flip(); }
-                else { state = state.wait_one(); }
+                if ticks == 0 {
+                    state = state.flip();
+                } else {
+                    state = state.wait_one();
+                }
             }
-            (false, Status::Normal) => {} 
+            (false, Status::Normal) => {}
         }
 
         //handles case of empty board
         if leds == EMPTY {
             rprintln!("Empty");
             match board_state {
-                Status::Normal => { 
+                Status::Normal => {
                     rprintln!("Starting count at 5");
-                    board_state = board_state.flip(); 
+                    board_state = board_state.flip();
                 }
                 Status::Wait(ticks) => {
                     rprintln!("num ticks: {}", ticks);
                     if ticks == 0 {
                         rprintln!("applying new pattern");
                         board_state = board_state.flip();
-                        randomize_board(& mut rng, & mut leds);
+                        randomize_board(&mut rng, &mut leds);
+                    } else {
+                        board_state = board_state.wait_one();
                     }
-                    else { board_state = board_state.wait_one(); }
                 }
             }
         }
@@ -157,7 +158,4 @@ fn main() -> ! {
         display.show(&mut timer, leds, FRAME);
         life(&mut leds);
     }
-
 }
-
-
